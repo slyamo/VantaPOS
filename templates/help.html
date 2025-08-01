@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Help - VantaPOS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+<body>
+
+<div class="main-layout">
+
+    <!-- Sidebar -->
+<div class="sidebar">
+    <div style="text-align: center; padding: 10px 10px 0 10px; margin-top: 0;">
+        <img src="{{ url_for('static', filename='images/vantalogo.png') }}" alt="Logo" style="height: 150px; display: block; margin: 0 auto;">
+    </div>
+
+
+    <ul>
+        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('products') }}">Products</a></li>
+        <li><a href="{{ url_for('orders') }}" class="active">Orders</a></li>
+        <li><a href="{{ url_for('reports') }}" class="active">Reports</a></li>
+        {% if user_role == 'admin' %}
+            <li><a href="{{ url_for('settings') }}" class="active">Settings</a></li>
+        {% endif %}
+        <li><a href="{{ url_for('help') }}" class="active">Help</a></li>
+        <li><a href="{{ url_for('login') }}">Logout</a></li>
+    </ul>
+</div>
+
+
+   <!-- Help Content -->
+    <div class="dashboard-content">
+        <h1>Help & Support</h1>
+        <div class="help-section">
+            <h3>📖 Getting Started</h3>
+            <p>Use the sidebar to navigate between Products, Orders, and Reports. Add orders using the "Add Order" button and track stock levels easily.</p>
+
+            <h3>🛒 Managing Products</h3>
+            <p>Add, update, or delete products. Each product includes a name, cost price, selling price, and stock level.</p>
+
+            <h3>📦 Placing Orders</h3>
+            <p>Go to Orders &rarr; Add Order. Select products, input quantities, and the system will automatically calculate total and reduce stock.</p>
+
+            <h3>📊 Reports & Dashboard</h3>
+            <p>Check your dashboard for daily sales, profits, low stock alerts, and monthly analytics in chart form.</p>
+
+            <h3>Need More Help?</h3>
+            <p>Contact support at <a href="mailto:support@vantapos.com">support@vantapos.com</a> or call +254 700 123 456.</p>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

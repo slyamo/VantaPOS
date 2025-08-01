@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reports - VantaPOS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/vantalogo.png') }}" type="image/png">
+</head>
+<body>
+
+<div class="main-layout">
+     <!-- Sidebar -->
+<div class="sidebar">
+    <div style="text-align: center; padding: 10px 10px 0 10px; margin-top: 0;">
+        <img src="{{ url_for('static', filename='images/vantalogo.png') }}" alt="Logo" style="height: 150px; display: block; margin: 0 auto;">
+    </div>
+
+
+    <ul>
+        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('products') }}">Products</a></li>
+        <li><a href="{{ url_for('orders') }}" class="active">Orders</a></li>
+        <li><a href="{{ url_for('reports') }}" class="active">Reports</a></li>
+        {% if user_role == 'admin' %}
+            <li><a href="{{ url_for('settings') }}" class="active">Settings</a></li>
+        {% endif %}
+        <li><a href="{{ url_for('help') }}" class="active">Help</a></li>
+        <li><a href="{{ url_for('login') }}">Logout</a></li>
+    </ul>
+</div>
+
+    <!-- Reports Content -->
+    <div class="dashboard-content">
+        <h1>Reports</h1>
+
+        <!-- Date Filter Section -->
+        <form method="GET" action="{{ url_for('reports') }}" class="search-form">
+            <label for="start_date">From:</label>
+            <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}">
+            <label for="end_date">To:</label>
+            <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}">
+            <button type="submit">Filter</button>
+        </form>
+
+        <!-- Export Button -->
+        <div class="product-header">
+            <a href="{{ url_for('export_report', start_date=request.args.get('start_date', '') or '2000-01-01', end_date=request.args.get('end_date', '') or '2100-01-01') }}" class="add-button">
+                Export Report
+            </a>
+
+
+        </div>
+
+        <!-- Reports Table -->
+        <div class="table-container">
+            <table class="reports-table">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Total Quantity Sold</th>
+            <th>Total Revenue</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for report in reports %}
+        <tr>
+            <td>{{ report.product_name }}</td>
+            <td>{{ report.total_quantity_sold }}</td>
+            <td>KES {{ '%.2f'|format(report.total_revenue or 0) }}</td>
+
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

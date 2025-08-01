@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Settings - VantaPOS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/vantalogo.png') }}" type="image/png">
+</head>
+<body>
+<div class="main-layout">
+    <!-- Sidebar -->
+<div class="sidebar">
+    <div style="text-align: center; padding: 10px 10px 0 10px; margin-top: 0;">
+        <img src="{{ url_for('static', filename='images/vantalogo.png') }}" alt="Logo" style="height: 150px; display: block; margin: 0 auto;">
+    </div>
+
+
+    <ul>
+        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('products') }}">Products</a></li>
+        <li><a href="{{ url_for('orders') }}" class="active">Orders</a></li>
+        <li><a href="{{ url_for('reports') }}" class="active">Reports</a></li>
+        {% if user_role == 'admin' %}
+            <li><a href="{{ url_for('settings') }}" class="active">Settings</a></li>
+        {% endif %}
+        <li><a href="{{ url_for('help') }}" class="active">Help</a></li>
+        <li><a href="{{ url_for('login') }}">Logout</a></li>
+    </ul>
+</div>
+
+    <!-- Content Area -->
+    <div class="dashboard-content">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash-message {{ category }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+
+        <h1>User Management</h1>
+
+        <!-- Add User Form -->
+        <form method="POST" action="{{ url_for('add_user') }}" class="add-user-form">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <select name="role">
+                <option value="staff">Staff</option>
+                <option value="admin">Admin</option>
+            </select>
+            <button type="submit">Add User</button>
+        </form>
+
+
+
+        <br>
+
+        <div class="table-container">
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.role }}</td>
+                        <td>
+                            {% if user.username != 'admin' %}
+                            <form method="POST" action="{{ url_for('delete_user') }}">
+                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                <button type="submit" class="btn delete-btn">Delete</button>
+                            </form>
+                            {% else %}
+                            —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<script>
+  // Auto-hide all flash messages after 2 seconds
+  setTimeout(function () {
+    document.querySelectorAll('.flash-message').forEach(msg => {
+      msg.style.transition = 'opacity 0.5s ease';
+      msg.style.opacity = '0';
+      setTimeout(() => msg.remove(), 500);
+    });
+  }, 2000);
+</script>
+
+
+
+
+
+</body>
+</html>

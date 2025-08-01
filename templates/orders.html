@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Orders - VantaPOS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/vantalogo.png') }}" type="image/png">
+
+</head>
+<body>
+
+<div class="main-layout">
+     <!-- Sidebar -->
+<div class="sidebar">
+    <div style="text-align: center; padding: 10px 10px 0 10px; margin-top: 0;">
+        <img src="{{ url_for('static', filename='images/vantalogo.png') }}" alt="Logo" style="height: 150px; display: block; margin: 0 auto;">
+    </div>
+
+
+    <ul>
+        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('products') }}">Products</a></li>
+        <li><a href="{{ url_for('orders') }}" class="active">Orders</a></li>
+        <li><a href="{{ url_for('reports') }}" class="active">Reports</a></li>
+        {% if user_role == 'admin' %}
+            <li><a href="{{ url_for('settings') }}" class="active">Settings</a></li>
+        {% endif %}
+        <li><a href="{{ url_for('help') }}" class="active">Help</a></li>
+        <li><a href="{{ url_for('login') }}">Logout</a></li>
+    </ul>
+</div>
+
+    <!-- Orders Content -->
+    <div class="dashboard-content">
+        <h1>Orders</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+        <!-- Add Button -->
+        <div class="product-header">
+            <a href="#" class="add-button" id="openModalBtn">Add Order</a>
+        </div>
+
+<!-- Orders Table -->
+<div class="table-container">
+    <table class="products-table">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Total (Ksh)</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+                <tr>
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.customer_name }}</td>
+                    <td>{{ order.order_date.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ order.total_price }}</td>
+                    <td>
+                        <form action="{{ url_for('delete_order', order_id=order.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="action-btn delete" onclick="return confirm('Are you sure you want to delete this order?');">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+<!-- Add Order Modal -->
+<div id="addOrderModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeOrderModal">&times;</span>
+        <h2>Add New Order</h2>
+        <form action="{{ url_for('add_order') }}" method="POST" id="addOrderForm">
+            <label>Customer:</label>
+            <input type="text" name="customer" required>
+
+            <label>Products:</label>
+            <div id="product-list">
+                {% for product in products %}
+                    <div class="product-select" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <label style="flex: 1;">
+                            <input type="checkbox" class="product-checkbox" name="product_ids" value="{{ product.id }}" data-price="{{ product.selling_price }}">
+                            {{ product.name }} (Ksh {{ product.selling_price }})
+                        </label>
+                        <input type="number" name="quantities_{{ product.id }}" class="quantity-input" min="1" value="1" style="width: 60px;" disabled>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <label>Total:</label>
+            <input type="number" id="totalAmount" name="total" step="0.01" readonly>
+
+            <button type="submit">Add Order</button>
+        </form>
+    </div>
+</div>
+
+
+<!-- Modal Scripts -->
+<script>
+    const modal = document.getElementById('addOrderModal');
+    const btn = document.getElementById('openModalBtn');
+    const span = document.getElementById('closeOrderModal');
+
+    btn.onclick = () => modal.style.display = 'block';
+    span.onclick = () => modal.style.display = 'none';
+    window.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; }
+</script>
+
+<!-- Total Calculation Script (Fixed) -->
+<script>
+    const totalInput = document.getElementById('totalAmount');
+
+    document.querySelectorAll('.product-checkbox').forEach(cb => {
+        const productId = cb.value;
+        const qtyInput = document.querySelector(`input[name="quantities_${productId}"]`);
+
+        // Disable quantity input initially
+        qtyInput.disabled = true;
+
+        // Handle checkbox change
+        cb.addEventListener('change', () => {
+            qtyInput.disabled = !cb.checked;
+            calculateTotal();
+        });
+
+        // Handle quantity input change
+        qtyInput.addEventListener('input', calculateTotal);
+    });
+
+    function calculateTotal() {
+        let total = 0;
+        document.querySelectorAll('.product-checkbox').forEach(cb => {
+            const productId = cb.value;
+            const qtyInput = document.querySelector(`input[name="quantities_${productId}"]`);
+
+            if (cb.checked && qtyInput) {
+                const price = parseFloat(cb.dataset.price);
+                const qty = parseInt(qtyInput.value) || 1;
+                total += price * qty;
+            }
+        });
+        totalInput.value = total.toFixed(2);
+    }
+</script>
+        <script>
+  // Auto-hide all flash messages after 3 seconds
+  setTimeout(function () {
+    document.querySelectorAll('.flash-message').forEach(msg => {
+      msg.style.transition = 'opacity 0.5s ease';
+      msg.style.opacity = '0';
+      setTimeout(() => msg.remove(), 500);
+    });
+  }, 2000);
+</script>
+        
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Products - VantaPOS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/vantalogo.png') }}" type="image/png">
+</head>
+<body>
+
+<div class="main-layout">
+     <!-- Sidebar -->
+<div class="sidebar">
+    <div style="text-align: center; padding: 10px 10px 0 10px; margin-top: 0;">
+        <img src="{{ url_for('static', filename='images/vantalogo.png') }}" alt="Logo" style="height: 150px; display: block; margin: 0 auto;">
+    </div>
+
+
+    <ul>
+        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('products') }}">Products</a></li>
+        <li><a href="{{ url_for('orders') }}" class="active">Orders</a></li>
+        <li><a href="{{ url_for('reports') }}" class="active">Reports</a></li>
+        {% if user_role == 'admin' %}
+            <li><a href="{{ url_for('settings') }}" class="active">Settings</a></li>
+        {% endif %}
+        <li><a href="{{ url_for('help') }}" class="active">Help</a></li>
+        <li><a href="{{ url_for('login') }}">Logout</a></li>
+    </ul>
+</div>
+
+    <!-- Products Content -->
+    <div class="dashboard-content">
+
+        <h1>Products</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+    <div class="product-header">
+    {% if user_role == 'admin' %}
+    <button id="openModalBtn" class="add-button">Add Product</button>
+    {% endif %}
+    </div>
+
+        <!-- Search Bar -->
+        <form method="GET" action="{{ url_for('products') }}" class="search-form">
+            <input type="text" name="query" placeholder="Search by name or category" value="{{ request.args.get('query', '') }}">
+             <button type="submit">Search</button>
+        </form>
+
+
+        <!-- Products Table -->
+        <div class="table-container">
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>Product ID</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Buying Price</th>
+                        <th>Selling Price</th>
+                        <th>Stock</th>
+                        <th>Threshold</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                   {% for product in products %}
+                     <tr>
+                      <td>{{ product.id }}</td>
+                      <td>{{ product.name }}</td>
+                      <td>{{ product.category }}</td>
+                      <td>Ksh {{ product.buying_price }}</td>
+                      <td>Ksh {{ product.selling_price }}</td>
+                      <td>{{ product.stock }}</td>
+                      <td>{{ product.threshold }}</td>
+                      <td>
+                      {% if user_role == 'admin' %}
+                          <a href="#" class="action-btn edit" onclick="openEditModal(
+                            {{ product.id }},
+                            '{{ product.name }}',
+                            '{{ product.category }}',
+                            {{ product.buying_price }},
+                            {{ product.selling_price }},
+                            {{ product.stock }},
+                            {{ product.threshold }}
+                          )">Edit</a>
+                        {% endif %}
+
+                      {% if user_role == 'admin' %}
+                        <form action="{{ url_for('delete_product', product_id=product.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="action-btn delete" onclick="return confirm('Are you sure you want to delete this product?');">
+                                Delete
+                            </button>
+                        </form>
+                          {% endif %}
+
+
+                      </td>
+                      </tr>
+                      {% endfor %}
+              </tbody>
+
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Product Modal -->
+<div id="addProductModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Add New Product</h2>
+    <form action="{{ url_for('add_product') }}" method="POST" class="add-product-form">
+      <input type="text" name="name" placeholder="Product Name" required>
+      <input type="text" name="category" placeholder="Category" required>
+      <label for="buying_price">Buying Price (KES):</label>
+      <input type="number" id="buying_price" name="buying_price" min="0" step="0.01" required>
+      <label for="selling_price">Selling Price (KES):</label>
+      <input type="number" id="selling_price" name="selling_price" min="0" step="0.01" required>
+      <label for="stock">Stock:</label>
+      <input type="number" id="stock" name="stock" min="0" step="1" required>
+      <label for="threshold">Threshold:</label>
+      <input type="number" id="threshold" name="threshold" min="0" step="1" required>
+
+      <button type="submit">Add Product</button>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div id="editProductModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeEditModal">&times;</span>
+    <h2>Edit Product</h2>
+    <form action="{{ url_for('edit_product') }}" method="POST" class="edit-product-form">
+      <!-- Hidden product ID -->
+      <input type="hidden" id="edit_product_id" name="product_id">
+
+      <input type="text" id="edit_name" name="name" placeholder="Product Name" required>
+      <input type="text" id="edit_category" name="category" placeholder="Category" required>
+
+      <label for="edit_buying_price">Buying Price (KES):</label>
+      <input type="number" id="edit_buying_price" name="buying_price" min="0" step="0.01" required>
+
+      <label for="edit_selling_price">Selling Price (KES):</label>
+      <input type="number" id="edit_selling_price" name="selling_price" min="0" step="0.01" required>
+
+      <label for="edit_stock">Stock:</label>
+      <input type="number" id="edit_stock" name="stock" min="0" step="1" required>
+
+      <label for="edit_threshold">Threshold:</label>
+      <input type="number" id="edit_threshold" name="threshold" min="0" step="1" required>
+
+      <button type="submit">Update Product</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const modal = document.getElementById('addProductModal');
+  const btn = document.getElementById('openModalBtn');
+  const span = document.querySelector('.modal .close');
+
+  btn.onclick = function() {
+    modal.style.display = 'block';
+  }
+
+  span.onclick = function() {
+    modal.style.display = 'none';
+  }
+
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      modal.style.display = 'none';
+    }
+  }
+</script>
+
+<script>
+  // Handle Edit modal
+  const editModal = document.getElementById('editProductModal');
+  const closeEditModal = document.getElementById('closeEditModal');
+
+  // Attach click events to all edit buttons
+  document.querySelectorAll('.action-btn.edit').forEach(button => {
+    button.addEventListener('click', function (e) {
+      e.preventDefault();
+
+      const row = this.closest('tr');
+      document.getElementById('edit_product_id').value = row.children[0].innerText;
+      document.getElementById('edit_name').value = row.children[1].innerText;
+      document.getElementById('edit_category').value = row.children[2].innerText;
+      document.getElementById('edit_buying_price').value = row.children[3].innerText.replace('Ksh ', '');
+      document.getElementById('edit_selling_price').value = row.children[4].innerText.replace('Ksh ', '');
+      document.getElementById('edit_stock').value = row.children[5].innerText;
+      document.getElementById('edit_threshold').value = row.children[6].innerText;
+
+      editModal.style.display = 'block';
+    });
+  });
+
+  // Close modal
+  closeEditModal.onclick = () => editModal.style.display = 'none';
+  window.onclick = (event) => {
+    if (event.target == editModal) {
+      editModal.style.display = 'none';
+    }
+  };
+</script>
+<script>
+  // Auto-hide all flash messages after 2 seconds
+  setTimeout(function () {
+    document.querySelectorAll('.flash-message').forEach(msg => {
+      msg.style.transition = 'opacity 0.5s ease';
+      msg.style.opacity = '0';
+      setTimeout(() => msg.remove(), 500);
+    });
+  }, 2000);
+</script>
+
+</body>
+</html>

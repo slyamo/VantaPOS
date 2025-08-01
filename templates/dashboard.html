@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - VantaPOS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/vantalogo.png') }}" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body>
+
+<div class="main-layout">
+        <!-- Sidebar -->
+<div class="sidebar">
+    <div style="text-align: center; padding: 10px 10px 0 10px; margin-top: 0;">
+        <img src="{{ url_for('static', filename='images/vantalogo.png') }}" alt="Logo" style="height: 150px; display: block; margin: 0 auto;">
+
+    </div>
+
+
+    <ul>
+        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('products') }}">Products</a></li>
+        <li><a href="{{ url_for('orders') }}" class="active">Orders</a></li>
+        <li><a href="{{ url_for('reports') }}" class="active">Reports</a></li>
+        {% if user_role == 'admin' %}
+            <li><a href="{{ url_for('settings') }}" class="active">Settings</a></li>
+        {% endif %}
+        <li><a href="{{ url_for('help') }}" class="active">Help</a></li>
+        <li><a href="{{ url_for('login') }}">Logout</a></li>
+    </ul>
+</div>
+
+    <!-- Main Dashboard Content -->
+    <div class="dashboard-content">
+        <div class="dashboard-header">
+          <h1>Dashboard</h1>
+          <div class="datetime" id="datetime"></div>
+        </div>
+
+
+        <!-- Summary Cards and Products Below Threshold -->
+        <div class="dashboard-cards">
+            <div class="card blue">
+                <h3>Total Sales</h3>
+                <p>KES {{ total_sales }}</p>
+            </div>
+            <div class="card green">
+                <h3>Profit</h3>
+                <p>KES {{ total_profit }}</p>
+            </div>
+            <div class="card red below-threshold">
+                <h3>Low Stock Alert!</h3>
+                {% if low_stock %}
+                <ul>
+                    {% for product in low_stock %}
+                        <li>{{ product.name }} ({{ product.stock }} left)</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                    <p>All stock levels are okay </p>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <!-- Monthly Sales Bar Chart -->
+            <div class="chart-box">
+                <h3>Monthly Sales (KES)</h3>
+                <canvas id="barChart"></canvas>
+            </div>
+
+            <!-- Most Sold Products Pie Chart -->
+            <div class="chart-box">
+                <h3>Most Sold Products</h3>
+                <canvas id="pieChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-container">
+              {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+            <script>
+              setTimeout(() => {
+                const flash = document.querySelector('.flash-container');
+                if (flash) flash.style.display = 'none';
+              }, 3000);
+            </script>
+          {% endif %}
+        {% endwith %}
+    </div>
+</div>
+
+<script>
+    // Bar Chart - Monthly Sales
+    const barCtx = document.getElementById('barChart').getContext('2d');
+    new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ months|tojson }},
+            datasets: [{
+                label: 'Total Income',
+                data: {{ monthly_totals|tojson }},
+                backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                borderColor: 'rgba(41, 128, 185, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+
+
+    // Pie Chart - Most Sold Products
+    const pieCtx = document.getElementById('pieChart').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ product_names|tojson }},
+            datasets: [{
+                data: {{ quantities_sold|tojson }},
+                backgroundColor: [
+                    '#3498db', '#5dade2', '#85c1e9', '#aed6f1', '#d6eaf8'
+                ]
+            }]
+        }
+    });
+</script>
+
+
+<script>
+  function updateDateTime() {
+    const now = new Date();
+    const options = {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    };
+    document.getElementById('datetime').textContent = now.toLocaleString('en-KE', options);
+  }
+
+  updateDateTime(); // Initial call
+  setInterval(updateDateTime, 1000); // Update every second
+</script>
+
+
+
+</body>
+</html>
