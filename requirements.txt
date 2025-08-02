@@ -1,5 +1,5 @@
-flask_mysqldb==0.2.0
 Flask==3.1.0
+flask_mysqldb==0.2.0
 gunicorn==23.0.0
 Jinja2==3.1.4
 Werkzeug==3.1.3
