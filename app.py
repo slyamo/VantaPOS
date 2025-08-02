@@ -30,6 +30,7 @@ def inject_user_role():
 def index():
     return redirect(url_for('login'))
 
+"""
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     msg = ''
@@ -45,6 +46,31 @@ def login():
         if user:
             session['username'] = user['username']
             session['role'] = user['role']  # ✅ Store role in session
+            flash('Login successful', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            msg = 'Invalid credentials'
+
+    return render_template('login.html', msg=msg)
+
+"""
+from werkzeug.security import check_password_hash
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    msg = ''
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
+        user = cursor.fetchone()
+        cursor.close()
+
+        if user and check_password_hash(user['password'], password):
+            session['username'] = user['username']
+            session['role'] = user['role']
             flash('Login successful', 'success')
             return redirect(url_for('dashboard'))
         else:
@@ -342,6 +368,7 @@ def update_role():
     flash('User role updated successfully.', 'success')
     return redirect(url_for('settings'))
 
+'''
 #add user route
 @app.route('/add_user', methods=['POST'])
 def add_user():
@@ -360,9 +387,37 @@ def add_user():
 
     flash('User added successfully', 'success')
     return redirect(url_for('settings'))
+'''
+
+from werkzeug.security import generate_password_hash
+
+@app.route('/add_user', methods=['POST'])
+def add_user():
+    if 'role' not in session or session['role'] != 'admin':
+        flash('Access denied. Admins only.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    username = request.form['username']
+    password = request.form['password']
+    role = request.form['role']
+
+    # Hash the password before saving
+    hashed_password = generate_password_hash(password)
+
+    cursor = mysql.connection.cursor()
+    cursor.execute(
+        'INSERT INTO users (username, password, role) VALUES (%s, %s, %s)',
+        (username, hashed_password, role)
+    )
+    mysql.connection.commit()
+    cursor.close()
+
+    flash('User added successfully', 'success')
+    return redirect(url_for('settings'))
+
 
 '''
-#delete user route
+#delete user routep
 @app.route('/delete_user', methods=['POST'])
 def delete_user():
     if 'role' not in session or session['role'] != 'admin':
